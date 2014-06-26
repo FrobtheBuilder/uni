@@ -1,0 +1,42 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : Jun 22, 2014, 1:36:36 AM
+    Author     : Frob
+*/
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+header {
+    padding: 20px;
+    width: auto;
+    background-color: honeydew;
+    border-bottom: solid 1px grey;
+}
+
+.container {
+    padding: 20px;
+    
+}
+
+.instance {
+    border: solid grey 1px;
+    padding-left: 5px;
+    margin: 5px 5px 5px 0;
+}
+
+.instance .name {
+    padding: 3px 6px;
+    margin: 3px;
+    cursor: pointer;
+}
+
+.instance .name:hover {
+    background-color: black;
+    color: white;
+}
