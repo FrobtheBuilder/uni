@@ -23,14 +23,14 @@ function choose(arr) {
     return arr[randInt(0, arr.length-1)];
 }
 
-var stat = {};
-stat.layers = 0;
-
-stat.things = {};
-stat.things._array = [];
-stat.nthings = 0;
-
-stat.collections = {};
+var stat = {
+    layers: 0,
+    things: {_array: []},
+    nthings: 0,
+    collections: {},
+    instances: [],
+    ninstances: 0
+};
 
 stat.collections.getRandomName = function(collection) {
     return choose(this[collection]).name;
@@ -40,46 +40,49 @@ function Thing(name, contains, callback) {
     this.name = name;
     this.dispname = this.name;
     this.callback = callback;
+    this.contains = contains;
+    
     stat.things[this.name] = this;
     stat.things._array.push(stat.things[this.name]);
-    this.contains = contains;
     this.id = stat.nthings;
     stat.nthings++;
 }
 
-stat.instances = [];
-stat.ninstances = 0;
+
 function Instance(type) {
     this.type = stat.things[type];
+    this.id = stat.ninstances;
     this.name = this.type.name;
     this.dispname = this.type.dispname;
     this.children = [];
-    this.id = stat.ninstances;
-    stat.instances[this.id] = this;
+    
     this.element = null;
     this.parent = null;
     this.opened = false;
+    
+    stat.instances[this.id] = this;
     stat.ninstances++;
     
     this.grown = false;
     this.show = false;
+    
     if (this.type.callback !== null && typeof this.type.callback === "function") {
         this.type.callback.call(this);
     }
+    
     this.buildElement();
 }
 
 Instance.prototype.buildElement = function() {
     this.element = $("<div></div>")
                     .addClass("num"+this.id)
-                    .addClass("instance")
+                    .addClass("instance closed")
                     .attr("id", this.id)
                     .append($("<div></div>").addClass("name").text(this.dispname))
-                    .css("background-color", "rgb("+(255-stat.layers)+", "+(255-stat.layers)+", "+(255-stat.layers)+")");
+                    //.css("background-color", "rgb("+(255-stat.layers)+", "+(255-stat.layers)+", "+(255-stat.layers)+")");
     this.element.host = this;
 };
 
-//manual overriding
 Instance.prototype.addChild = function(child) {
     child.parent = this;
     this.children.push(child);
@@ -92,6 +95,8 @@ Instance.prototype.toggle = function() {
             elem.show = false;
         });
         this.opened = false;
+        this.element.removeClass("opened");
+        this.element.addClass("closed");
     }
     else {
         (this.grown || this.grow());
@@ -99,6 +104,8 @@ Instance.prototype.toggle = function() {
             elem.show = true;
         });
         this.opened = true;
+        this.element.removeClass("closed");
+        this.element.addClass("opened");
     }
     this.display();
 };
@@ -205,7 +212,7 @@ Instance.prototype.reveal = function() {
         this.element.css("display", "none");
     }
     else {
-        this.element.css("display", "block");
+        this.element.css({"display": "block"});
     }
 };
 
@@ -242,16 +249,24 @@ var template = [
     },
     {
         nm: "continent",
-        ct: [],
+        ct: [".region, 5-10"],
         cb: function() {
             this.dispname = "continent of "+choose(["Ant", "El", "Am", "In", "Err", "Citro"])
                             +choose(["luria", "alia", "lanta", "ronia", "arus"]);
+        }
+    },
+    {
+        nm: "dry region",
+        co: "region",
+        ct: [".land,1-5", ".civilization,0-5"],
+        cb: function() {
+            this.dispname = choose(["north", "south", "east", "west"]) + " " + this.name;
         }
     }
 ];
 
 function makeThings(template) {
-    template.forEach(function(element, index, array) {
+    template.forEach(function(element) {
         var th = new Thing(element.nm, element.ct, element.cb, element.co);
         if (element.dn) {
             th.dispname = element.dn;
@@ -259,6 +274,7 @@ function makeThings(template) {
         if (element.co) {
             if (stat.collections[element.co] === undefined) stat.collections[element.co] = [];
             stat.collections[element.co].push(th);
+            th.collection = element.co;
         }
     });
 }

@@ -10,13 +10,14 @@ and open the template in the editor.
 
 body {
     font-family: Arial, Helvetica, sans-serif;
+    background-color: #EFEFEF;
 }
 
 header {
     padding: 20px;
     width: auto;
     background-color: honeydew;
-    border-bottom: solid 1px grey;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .container {
@@ -25,18 +26,34 @@ header {
 }
 
 .instance {
-    border: solid grey 1px;
     padding-left: 5px;
     margin: 5px 5px 5px 0;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+    border-radius: 1px;
 }
 
 .instance .name {
-    padding: 3px 6px;
-    margin: 3px;
+    padding: 5px 9px;
+    margin-left: -5px;
     cursor: pointer;
+    border-radius: 2px;
 }
 
 .instance .name:hover {
     background-color: black;
     color: white;
+}
+
+.opened {
+    background-color: honeydew;
+    padding-bottom: 1px;
+}
+
+.opened .name {
+    background-color: white;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.closed {
+    background-color: white;
 }
