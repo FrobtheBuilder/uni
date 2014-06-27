@@ -27,37 +27,32 @@ var stat = {};
 stat.layers = 0;
 
 stat.things = {};
-stat.things._array = []
+stat.things._array = [];
 stat.nthings = 0;
 
-function Thing(name, contains, instName) {
+stat.collections = {};
+
+stat.collections.getRandomName = function(collection) {
+    return choose(this[collection]).name;
+};
+
+function Thing(name, contains, callback) {
     this.name = name;
+    this.dispname = this.name;
+    this.callback = callback;
     stat.things[this.name] = this;
     stat.things._array.push(stat.things[this.name]);
     this.contains = contains;
     this.id = stat.nthings;
     stat.nthings++;
-    if (instName !== undefined) {
-        this.instName = instName;
-    }
-    else {
-        this.instName = this.name;
-    }
-    
 }
 
 stat.instances = [];
 stat.ninstances = 0;
 function Instance(type) {
     this.type = stat.things[type];
-    
-    if (this.type.instName !== null && typeof this.type.instName === "function") {
-        this.name = this.type.instName();
-    }
-    else {
-        this.name = this.type.instName;
-    }
-    if (name) this.name = name;
+    this.name = this.type.name;
+    this.dispname = this.type.dispname;
     this.children = [];
     this.id = stat.ninstances;
     stat.instances[this.id] = this;
@@ -68,6 +63,9 @@ function Instance(type) {
     
     this.grown = false;
     this.show = false;
+    if (this.type.callback !== null && typeof this.type.callback === "function") {
+        this.type.callback.call(this);
+    }
     this.buildElement();
 }
 
@@ -76,7 +74,7 @@ Instance.prototype.buildElement = function() {
                     .addClass("num"+this.id)
                     .addClass("instance")
                     .attr("id", this.id)
-                    .append($("<div></div>").addClass("name").text(this.name))
+                    .append($("<div></div>").addClass("name").text(this.dispname))
                     .css("background-color", "rgb("+(255-stat.layers)+", "+(255-stat.layers)+", "+(255-stat.layers)+")");
     this.element.host = this;
 };
@@ -110,7 +108,7 @@ Instance.prototype.grow = function() {
     var that = this;
     if (this.type.contains !== undefined) {
         this.type.contains.forEach(function(element) {
-            that.processString(element).forEach(function(elem) {
+            that.processString(that.processCollection( "random", element, stat.collections)).forEach(function(elem) {
                 that.addChild(elem);
             });
         });
@@ -119,9 +117,31 @@ Instance.prototype.grow = function() {
     stat.layers++;
 };
 
+Instance.prototype.processCollection = function(method, element, collections) {
+    if (element.contains(".")) {
+        if (method === "random") {
+            var collectionString = element.split(".")[1];
+            var collectionName;
+            var collectionMod;
+
+            if (collectionString.contains(",")) {
+                collectionName = collectionString.split(",")[0];
+                collectionMod = collectionString.split(",")[1];
+            }
+            else {
+                collectionName = collectionString;
+                collectionMod = "";
+            }
+            element = collections.getRandomName(collectionName)+","+collectionMod;
+        }
+    }
+    return element;
+};
+
 Instance.prototype.processString = function(element) {
     var elemArray;
     var returnArray = [];
+    
     if (element.contains(",")) {
         elemArray = element.split(",");
         if (elemArray[1].contains("%")) {
@@ -189,22 +209,66 @@ Instance.prototype.reveal = function() {
     }
 };
 
-var collections = {};
-collections['planet'] = [];
+Instance.prototype.pushTo = function(target) {
+    // just a shim to make it a bit more readable when I add it to a collection on creation
+    target.push(this);
+};
 
-new Thing("universe", ["galactic supercluster,10-12"]);
-new Thing("galactic supercluster", ["galaxy"]);
-new Thing("galaxy", ["star system,5-10"]);
-collections['planet'].push(new Thing("inhabited telluric planet", ["continent,1-6"], "telluric planet"));
-new Thing("star system", ["star", "inhabited telluric planet,1-4"]);
+// an array of objects that are used to create our instances. 
+// {name, contains, callback, collection, dispname} :: {nm, ct, cb, co, dn};
 
+var template = [
+    {
+        nm: "universe", 
+        ct: ["galactic supercluster,10-12"]
+    },
+    {
+        nm: "galactic supercluster", 
+        ct: ["galaxy,5-10"]
+    },
+    {
+        nm: "galaxy", 
+        ct: ["star system, 10-15"]
+    },
+    {
+        nm: "star system",
+        ct: [".planet, 0-5"],
+    },
+    {
+        nm: "inhabited telluric planet",
+        dn: "telluric planet",
+        ct: ["continent,1-6"],
+        co: "planet"
+    },
+    {
+        nm: "continent",
+        ct: [],
+        cb: function() {
+            this.dispname = "continent of "+choose(["Ant", "El", "Am", "In", "Err", "Citro"])
+                            +choose(["luria", "alia", "lanta", "ronia", "arus"]);
+        }
+    }
+];
 
-new Thing("continent", [], function(){
-    return "continent of "+choose(["Ant", "El", "Am", "In", "Err", "Citro"])
-                          +choose(["luria", "alia", "lanta", "ronia", "arus"]);
-});
+function makeThings(template) {
+    template.forEach(function(element, index, array) {
+        var th = new Thing(element.nm, element.ct, element.cb, element.co);
+        if (element.dn) {
+            th.dispname = element.dn;
+        }
+        if (element.co) {
+            if (stat.collections[element.co] === undefined) stat.collections[element.co] = [];
+            stat.collections[element.co].push(th);
+        }
+    });
+}
 
-new Thing("star", ["universe"]);
+//new Thing("continent", [], function(){
+    //this.name = "continent of "+choose(["Ant", "El", "Am", "In", "Err", "Citro"])
+    //                      +choose(["luria", "alia", "lanta", "ronia", "arus"]);
+//});
+
+makeThings(template);
 
 var topLevel = new Instance("universe");
 
