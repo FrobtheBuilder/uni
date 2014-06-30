@@ -29,7 +29,8 @@ header {
     padding-left: 5px;
     margin: 5px 5px 5px 0;
     box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
-    border-radius: 1px;
+    border-radius: 2px;
+    border: solid 1px gainsboro;
 }
 
 .instance .name {
@@ -44,16 +45,16 @@ header {
     color: white;
 }
 
-.opened {
-    background-color: honeydew;
-    padding-bottom: 1px;
-}
+//.opened {
+//    background-color: white;
+//    padding-bottom: 1px;
+//}
 
-.opened .name {
-    background-color: white;
-    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
-}
+//.opened .name {
+//    background-color: white;
+//    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+//}
 
-.closed {
-    background-color: white;
-}
+//.closed {
+//    background-color: white;
+//}

@@ -32,6 +32,12 @@ var stat = {
     ninstances: 0
 };
 
+var util = {
+    getDirection: function() {
+        return choose(["north", "south", "east", "west"]);
+    }
+}
+
 stat.collections.getRandomName = function(collection) {
     return choose(this[collection]).name;
 };
@@ -79,7 +85,7 @@ Instance.prototype.buildElement = function() {
                     .addClass("instance closed")
                     .attr("id", this.id)
                     .append($("<div></div>").addClass("name").text(this.dispname))
-                    //.css("background-color", "rgb("+(255-stat.layers)+", "+(255-stat.layers)+", "+(255-stat.layers)+")");
+                    //.css("background-color", "rgb("+(255-(that.countLayers()*5))+", "+(255-(that.countLayers()*5))+", "+(255-(that.countLayers()*5))+")");
     this.element.host = this;
 };
 
@@ -100,10 +106,10 @@ Instance.prototype.toggle = function() {
     }
     else {
         (this.grown || this.grow());
+        this.opened = true;
         this.children.forEach(function(elem) {
             elem.show = true;
         });
-        this.opened = true;
         this.element.removeClass("closed");
         this.element.addClass("opened");
     }
@@ -124,6 +130,7 @@ Instance.prototype.grow = function() {
     stat.layers++;
 };
 
+//convert a ".collection" string into an actual thing name by some means
 Instance.prototype.processCollection = function(method, element, collections) {
     if (element.contains(".")) {
         if (method === "random") {
@@ -145,6 +152,7 @@ Instance.prototype.processCollection = function(method, element, collections) {
     return element;
 };
 
+//process a string like "item,20%" or "item,1-9" into a meaningful array of instances that can be added another
 Instance.prototype.processString = function(element) {
     var elemArray;
     var returnArray = [];
@@ -184,6 +192,8 @@ Instance.prototype.processString = function(element) {
 
 
 //Yknow this used to be recursive! Shame that didn't work out...
+//this actually shows the element, appending it to its parent, and appending its children without showing them
+//unless of course the object is opened
 Instance.prototype.display = function(clear) {
     var container;
     if (this.parent === null || this.parent.element === null) {
@@ -207,63 +217,35 @@ Instance.prototype.display = function(clear) {
     }
 };
 
+//show or hide element based on variable hurr durr
 Instance.prototype.reveal = function() {
     if (this.show === false) {
         this.element.css("display", "none");
     }
     else {
-        this.element.css({"display": "block"});
+        var layers = this.countLayers();
+        console.log(layers);
+        this.element.css({
+                    "display": "block",
+                    "background-color": 'rgb('+(255-(layers*3))+','+(255-(layers*1))+','+(255-(layers*3))+')'
+        });
     }
 };
 
-Instance.prototype.pushTo = function(target) {
-    // just a shim to make it a bit more readable when I add it to a collection on creation
-    target.push(this);
-};
-
-// an array of objects that are used to create our instances. 
-// {name, contains, callback, collection, dispname} :: {nm, ct, cb, co, dn};
-
-var template = [
-    {
-        nm: "universe", 
-        ct: ["galactic supercluster,10-12"]
-    },
-    {
-        nm: "galactic supercluster", 
-        ct: ["galaxy,5-10"]
-    },
-    {
-        nm: "galaxy", 
-        ct: ["star system, 10-15"]
-    },
-    {
-        nm: "star system",
-        ct: [".planet, 0-5"],
-    },
-    {
-        nm: "inhabited telluric planet",
-        dn: "telluric planet",
-        ct: ["continent,1-6"],
-        co: "planet"
-    },
-    {
-        nm: "continent",
-        ct: [".region, 5-10"],
-        cb: function() {
-            this.dispname = "continent of "+choose(["Ant", "El", "Am", "In", "Err", "Citro"])
-                            +choose(["luria", "alia", "lanta", "ronia", "arus"]);
-        }
-    },
-    {
-        nm: "dry region",
-        co: "region",
-        ct: [".land,1-5", ".civilization,0-5"],
-        cb: function() {
-            this.dispname = choose(["north", "south", "east", "west"]) + " " + this.name;
+Instance.prototype.countLayers = function() {
+    var layers = 0;
+    count(this);
+    function count(inst) {
+        if (inst.parent) {
+            layers++;
+            count(inst.parent);
         }
     }
-];
+    return layers;
+}
+
+
+
 
 function makeThings(template) {
     template.forEach(function(element) {
@@ -279,15 +261,10 @@ function makeThings(template) {
     });
 }
 
-//new Thing("continent", [], function(){
-    //this.name = "continent of "+choose(["Ant", "El", "Am", "In", "Err", "Citro"])
-    //                      +choose(["luria", "alia", "lanta", "ronia", "arus"]);
-//});
-
 makeThings(template);
 
-var topLevel = new Instance("universe");
 
+var topLevel = new Instance("universe");
 topLevel.show = true;
 topLevel.display();
 topLevel.reveal();
